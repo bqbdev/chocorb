@@ -1,33 +1,30 @@
-﻿const SELLER_WHATSAPP = "5511999999999";
+﻿const SELLER_WHATSAPP = "5519991365263";
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
-const categories = ["Todos", "Cones tradicionais", "Cones gourmet", "Brigadeiros", "Kits especiais"];
+let categories = ["Todos"];
 let products = [];
 let cart = [];
 let activeCategory = "Todos";
 let lastWhatsappUrl = "";
 
-function svgImage(title, colorA, colorB) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="700" height="520" viewBox="0 0 700 520"><rect width="700" height="520" fill="${colorA}"/><circle cx="540" cy="100" r="150" fill="${colorB}" opacity=".45"/><path d="M230 116h240l-66 322H296z" fill="#c27a3d"/><path d="M260 116h180v118H260z" fill="#fff1d7"/><circle cx="350" cy="104" r="92" fill="#44200f"/><circle cx="315" cy="82" r="12" fill="#f4d4a9"/><circle cx="378" cy="88" r="16" fill="#f4d4a9"/><text x="350" y="470" text-anchor="middle" font-family="Arial" font-size="42" font-weight="800" fill="#fff">${title}</text></svg>`;
-  return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
-}
-
-const seedProducts = [
-  { name: "Cone Brigadeiro", category: "Cones tradicionais", description: "Casquinha crocante com brigadeiro cremoso.", price: 8.5, stock: 40, featured: true, active: true, imageBase64: svgImage("Cone Brigadeiro", "#6b3419", "#d99a58") },
-  { name: "Cone Morango", category: "Cones gourmet", description: "Chocolate, creme especial e morangos.", price: 9.5, stock: 30, featured: true, active: true, imageBase64: svgImage("Cone Morango", "#8e2f2f", "#ffd6c2") },
-  { name: "Cone Ninho", category: "Cones gourmet", description: "Recheio de leite ninho e finalização branca.", price: 9.5, stock: 30, featured: true, active: true, imageBase64: svgImage("Cone Ninho", "#d7a25a", "#fff3d4") },
-  { name: "Brigadeiro Gourmet", category: "Brigadeiros", description: "Unidade enrolada com granulado belga.", price: 3.5, stock: 80, featured: false, active: true, imageBase64: svgImage("Brigadeiro", "#4b2111", "#c78345") },
-  { name: "Kit Festa RB", category: "Kits especiais", description: "10 brigadeiros e 4 cones sortidos.", price: 58, stock: 12, featured: true, active: true, imageBase64: svgImage("Kit Festa", "#4a2414", "#f1c27d") }
-];
-
 const el = (id) => document.getElementById(id);
 
 async function loadProducts() {
   try {
-    const snap = await db.collection("products").where("active", "==", true).get();
-    products = snap.empty ? seedProducts.map((p, i) => ({ id: `seed-${i}`, ...p })) : snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const [productsSnap, categoriesSnap] = await Promise.all([
+      db.collection("products").where("active", "==", true).get(),
+      db.collection("categories").where("active", "==", true).get()
+    ]);
+    products = productsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const categoryNames = categoriesSnap.docs
+      .map((doc) => doc.data().name)
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, "pt-BR"));
+    const productCategories = products.map((product) => product.category).filter(Boolean);
+    categories = ["Todos", ...new Set([...categoryNames, ...productCategories])];
   } catch (error) {
     console.warn(error);
-    products = seedProducts.map((p, i) => ({ id: `seed-${i}`, ...p }));
+    products = [];
+    categories = ["Todos"];
   }
   renderCategories();
   renderProducts();
@@ -39,6 +36,14 @@ function renderCategories() {
 
 function renderProducts() {
   const list = activeCategory === "Todos" ? products : products.filter((p) => p.category === activeCategory);
+  if (!list.length) {
+    el("productsGrid").innerHTML = `
+      <div class="empty-state">
+        <strong>Nenhum produto cadastrado</strong>
+        <span>Assim que a loja cadastrar produtos, eles aparecerão aqui.</span>
+      </div>`;
+    return;
+  }
   el("productsGrid").innerHTML = list.map((p) => `
     <article class="product-card">
       ${p.imageBase64 ? `<img class="product-img" src="${p.imageBase64}" alt="${p.name}">` : `<div class="placeholder-img"><strong>Produto sem imagem</strong><span>${p.name}</span></div>`}
@@ -177,4 +182,3 @@ el("continueShopping").addEventListener("click", () => {
 
 loadProducts();
 renderCart();
-

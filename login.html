@@ -12,7 +12,10 @@
     <h1>Choco RB</h1>
     <p>Acesse o painel administrativo.</p>
     <input id="email" type="email" placeholder="E-mail">
-    <input id="password" type="password" placeholder="Senha">
+    <div class="password-field">
+      <input id="password" type="password" placeholder="Senha">
+      <button id="togglePassword" type="button">Mostrar</button>
+    </div>
     <button id="loginBtn">Entrar</button>
     <small id="loginMsg"></small>
   </main>
@@ -21,19 +24,36 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
   <script>
-    document.getElementById("loginBtn").addEventListener("click", async () => {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-      const msg = document.getElementById("loginMsg");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const loginBtn = document.getElementById("loginBtn");
+    const togglePassword = document.getElementById("togglePassword");
+    const msg = document.getElementById("loginMsg");
+
+    togglePassword.addEventListener("click", () => {
+      const visible = passwordInput.type === "text";
+      passwordInput.type = visible ? "password" : "text";
+      togglePassword.textContent = visible ? "Mostrar" : "Ocultar";
+    });
+
+    async function entrar() {
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
       msg.textContent = "Entrando...";
       try {
         await auth.signInWithEmailAndPassword(email, password);
         location.href = "dashboard.html";
       } catch (error) {
-        msg.textContent = "Não foi possível entrar. Confira e-mail e senha.";
+        msg.textContent = "Não foi possível entrar. Confira se o e-mail é exatamente o mesmo criado no Firebase e se a senha está correta.";
       }
+    }
+
+    loginBtn.addEventListener("click", entrar);
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") entrar();
     });
   </script>
 </body>
 </html>
+
 

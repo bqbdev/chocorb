@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --choco: #351b0f;
   --choco-2: #5b2d17;
   --caramel: #c9803c;
@@ -51,6 +51,26 @@ input, select, textarea {
 .login-logo { width: 92px; height: 92px; object-fit: cover; border-radius: 50%; margin: 0 auto; }
 .login-card h1 { margin: 0; }
 .login-card p, .login-card small { color: var(--muted); }
+.password-field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+.password-field input {
+  border: 0;
+  border-radius: 0;
+}
+.password-field button {
+  border-radius: 0;
+  background: #f3e3cf;
+  color: var(--choco);
+  padding: 0 12px;
+  min-width: 86px;
+}
 .login-card button, .form-grid button, #refreshBtn {
   background: var(--choco);
   color: white;
@@ -127,6 +147,7 @@ input, select, textarea {
   margin-bottom: 16px;
 }
 .form-grid textarea, .form-grid button { grid-column: span 3; }
+.compact-form button { grid-column: auto; }
 .checkline { display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--muted); }
 .checkline input { width: auto; }
 .status-chart { display: grid; gap: 8px; }
@@ -162,6 +183,57 @@ input, select, textarea {
 .pill.low { background: #fee4e2; color: var(--red); }
 .pill.ok { background: #dcfae6; color: var(--green); }
 canvas { width: 100%; max-width: 100%; }
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(255, 250, 242, .82);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .18s ease, visibility .18s ease;
+}
+.loading-overlay.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.loading-card {
+  width: min(340px, 100%);
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  background: rgba(255, 255, 255, .96);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  color: var(--choco);
+}
+.loading-card span {
+  color: var(--muted);
+  font-size: .9rem;
+}
+.loading-spinner {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 4px solid #f3e3cf;
+  border-top-color: var(--choco);
+  animation: spin .75s linear infinite;
+}
+body.is-loading #refreshBtn {
+  opacity: .72;
+  cursor: wait;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 @media (max-width: 980px) {
   .sidebar { position: sticky; top: 0; width: 100%; height: auto; z-index: 5; }
   .sidebar nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -175,3 +247,4 @@ canvas { width: 100%; max-width: 100%; }
   .admin-top { align-items: start; flex-direction: column; }
   .kpis { grid-template-columns: 1fr; }
 }
+

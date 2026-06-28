@@ -21,6 +21,11 @@ service cloud.firestore {
       allow write: if signedIn();
     }
 
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if signedIn();
+    }
+
     match /settings/{settingId} {
       allow read: if true;
       allow write: if signedIn();

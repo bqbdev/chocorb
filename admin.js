@@ -1,15 +1,16 @@
 ﻿const moneyAdmin = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const menu = [
-  ["dashboard", "Dashboard"], ["orders", "Pedidos"], ["products", "Produtos"], ["customers", "Clientes"], ["stock", "Estoque"],
+  ["dashboard", "Dashboard"], ["orders", "Pedidos"], ["products", "Produtos"], ["categories", "Categorias"], ["customers", "Clientes"], ["stock", "Estoque"],
   ["finance", "Financeiro"], ["payments", "Recebimentos"], ["expenses", "Despesas"], ["pricing", "Precificação"], ["reports", "Relatórios"], ["settings", "Configurações"]
 ];
 const statuses = ["Novo", "Confirmado", "Em producao", "Pronto", "Entregue", "Cancelado"];
-let state = { orders: [], products: [], customers: [], stock: [], expenses: [], payments: [] };
+let state = { orders: [], products: [], categories: [], customers: [], stock: [], expenses: [], payments: [] };
 let currentImageBase64 = "";
 
 const $ = (id) => document.getElementById(id);
 const todayKey = () => new Date().toISOString().slice(0, 10);
 const number = (value) => Number(value || 0);
+let loadingCount = 0;
 
 auth.onAuthStateChanged((user) => {
   if (!user) location.href = "login.html";
@@ -33,9 +34,26 @@ function showView(id) {
   $("viewTitle").textContent = menu.find((item) => item[0] === id)?.[1] || "Painel";
 }
 
-async function loadCollection(name, orderBy = "createdAt") {
+function showLoading() {
+  loadingCount += 1;
+  document.body.classList.add("is-loading");
+  $("loadingOverlay")?.classList.add("show");
+  $("loadingOverlay")?.setAttribute("aria-hidden", "false");
+  if ($("refreshBtn")) $("refreshBtn").disabled = true;
+}
+
+function hideLoading() {
+  loadingCount = Math.max(loadingCount - 1, 0);
+  if (loadingCount > 0) return;
+  document.body.classList.remove("is-loading");
+  $("loadingOverlay")?.classList.remove("show");
+  $("loadingOverlay")?.setAttribute("aria-hidden", "true");
+  if ($("refreshBtn")) $("refreshBtn").disabled = false;
+}
+
+async function loadCollection(name, orderBy = "createdAt", direction = "desc") {
   try {
-    const snap = await db.collection(name).orderBy(orderBy, "desc").get();
+    const snap = await db.collection(name).orderBy(orderBy, direction).get();
     return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     const snap = await db.collection(name).get();
@@ -44,17 +62,24 @@ async function loadCollection(name, orderBy = "createdAt") {
 }
 
 async function loadAll() {
-  const [orders, products, customers, stock, expenses, payments] = await Promise.all([
-    loadCollection("orders"), loadCollection("products"), loadCollection("customers", "lastOrder"), loadCollection("stock"), loadCollection("expenses"), loadCollection("payments")
-  ]);
-  state = { orders, products, customers, stock, expenses, payments };
-  renderEverything();
+  showLoading();
+  try {
+    const [orders, products, categories, customers, stock, expenses, payments] = await Promise.all([
+      loadCollection("orders"), loadCollection("products"), loadCollection("categories", "order", "asc"), loadCollection("customers", "lastOrder"), loadCollection("stock"), loadCollection("expenses"), loadCollection("payments")
+    ]);
+    state = { orders, products, categories, customers, stock, expenses, payments };
+    renderEverything();
+  } finally {
+    hideLoading();
+  }
 }
 
 function renderEverything() {
   renderDashboard();
   renderOrders();
+  renderCategoryOptions();
   renderProducts();
+  renderCategories();
   renderCustomers();
   renderStock();
   renderExpenses();
@@ -170,6 +195,54 @@ function renderProducts() {
       <td><span class="pill ${p.active ? "ok" : "low"}">${p.active ? "Ativo" : "Inativo"}</span></td>
       <td><div class="row-actions"><button class="secondary" data-edit-product="${p.id}">Editar</button><button class="danger" data-delete-product="${p.id}">Excluir</button></div></td>
     </tr>`).join("")}</tbody></table>` : "Nenhum produto cadastrado.";
+}
+
+function renderCategoryOptions() {
+  const fallback = [{ name: "Cones tradicionais" }, { name: "Cones gourmet" }, { name: "Brigadeiros" }, { name: "Kits especiais" }];
+  const categories = state.categories.length ? state.categories : fallback;
+  $("productCategory").innerHTML = categories
+    .filter((category) => category.active !== false)
+    .map((category) => `<option>${category.name}</option>`)
+    .join("");
+}
+
+function renderCategories() {
+  $("categoriesList").innerHTML = state.categories.length ? `<table class="table"><thead><tr><th>Categoria</th><th>Ordem</th><th>Status</th><th>Ações</th></tr></thead><tbody>${state.categories.map((category) => `
+    <tr>
+      <td><strong>${category.name || "-"}</strong></td>
+      <td>${number(category.order)}</td>
+      <td><span class="pill ${category.active !== false ? "ok" : "low"}">${category.active !== false ? "Ativa" : "Inativa"}</span></td>
+      <td><div class="row-actions"><button class="secondary" data-edit-category="${category.id}">Editar</button><button class="danger" data-delete-category="${category.id}">Excluir</button></div></td>
+    </tr>`).join("")}</tbody></table>` : "Nenhuma categoria cadastrada.";
+}
+
+async function saveCategory(event) {
+  event.preventDefault();
+  const id = $("categoryId").value;
+  const payload = {
+    name: $("categoryName").value.trim(),
+    order: number($("categoryOrder").value),
+    active: $("categoryActive").checked,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  if (!payload.name) return alert("Informe o nome da categoria.");
+  if (id) await db.collection("categories").doc(id).update(payload);
+  else await db.collection("categories").add({ ...payload, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+  event.target.reset();
+  $("categoryId").value = "";
+  $("categoryActive").checked = true;
+  await loadAll();
+}
+
+function editCategory(id) {
+  const category = state.categories.find((item) => item.id === id);
+  if (!category) return;
+  $("categoryId").value = category.id;
+  $("categoryName").value = category.name || "";
+  $("categoryOrder").value = category.order || "";
+  $("categoryActive").checked = category.active !== false;
+  showView("categories");
+  scrollTo({ top: 0, behavior: "smooth" });
 }
 
 async function compressImage(file) {
@@ -314,6 +387,7 @@ function bindForms() {
   $("logoutBtn").addEventListener("click", () => auth.signOut());
   $("refreshBtn").addEventListener("click", loadAll);
   $("productForm").addEventListener("submit", saveProduct);
+  $("categoryForm").addEventListener("submit", saveCategory);
   $("stockForm").addEventListener("submit", saveStock);
   $("expenseForm").addEventListener("submit", saveExpense);
   document.addEventListener("change", async (event) => {
@@ -330,8 +404,13 @@ function bindForms() {
   });
   document.addEventListener("click", async (event) => {
     if (event.target.dataset.editProduct) editProduct(event.target.dataset.editProduct);
+    if (event.target.dataset.editCategory) editCategory(event.target.dataset.editCategory);
     if (event.target.dataset.deleteProduct && confirm("Excluir este produto?")) {
       await db.collection("products").doc(event.target.dataset.deleteProduct).delete();
+      await loadAll();
+    }
+    if (event.target.dataset.deleteCategory && confirm("Excluir esta categoria? Os produtos que usam essa categoria não serão apagados.")) {
+      await db.collection("categories").doc(event.target.dataset.deleteCategory).delete();
       await loadAll();
     }
   });

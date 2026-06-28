@@ -45,9 +45,7 @@
         <form id="productForm" class="form-grid">
           <input type="hidden" id="productId">
           <input id="productName" placeholder="Nome">
-          <select id="productCategory">
-            <option>Cones tradicionais</option><option>Cones gourmet</option><option>Brigadeiros</option><option>Kits especiais</option>
-          </select>
+          <select id="productCategory"></select>
           <input id="productPrice" type="number" step="0.01" placeholder="Preço">
           <input id="productStock" type="number" placeholder="Estoque atual">
           <textarea id="productDescription" placeholder="Descrição"></textarea>
@@ -57,6 +55,20 @@
           <button type="submit">Salvar produto</button>
         </form>
         <div id="productsList"></div>
+      </article>
+    </section>
+
+    <section id="categoriesView" class="view">
+      <article class="panel">
+        <h2>Categorias</h2>
+        <form id="categoryForm" class="form-grid compact-form">
+          <input type="hidden" id="categoryId">
+          <input id="categoryName" placeholder="Nome da categoria">
+          <input id="categoryOrder" type="number" placeholder="Ordem">
+          <label class="checkline"><input id="categoryActive" type="checkbox" checked> Ativa</label>
+          <button type="submit">Salvar categoria</button>
+        </form>
+        <div id="categoriesList"></div>
       </article>
     </section>
 
@@ -119,6 +131,14 @@
     <section id="reportsView" class="view"><article class="panel"><h2>Relatórios</h2><div id="reportsBox"></div></article></section>
     <section id="settingsView" class="view"><article class="panel"><h2>Configurações</h2><p>Altere o WhatsApp do vendedor na constante <strong>SELLER_WHATSAPP</strong> do arquivo app.js.</p></article></section>
   </main>
+
+  <div class="loading-overlay" id="loadingOverlay" aria-live="polite" aria-hidden="true">
+    <div class="loading-card">
+      <div class="loading-spinner" aria-hidden="true"></div>
+      <strong>Atualizando...</strong>
+      <span>Aguarde enquanto os dados são carregados.</span>
+    </div>
+  </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
