@@ -5,6 +5,7 @@ let products = [];
 let cart = [];
 let activeCategory = "Todos";
 let lastWhatsappUrl = "";
+let customerLookupTimer = null;
 
 const el = (id) => document.getElementById(id);
 
@@ -104,6 +105,24 @@ function onlyDigits(value) {
   return String(value || "").replace(/\D/g, "");
 }
 
+async function lookupCustomerByPhone() {
+  const phone = onlyDigits(el("customerPhone").value);
+  if (phone.length < 10) return;
+  try {
+    const doc = await db.collection("customers").doc(phone).get();
+    if (!doc.exists) return;
+    const customer = doc.data();
+    if (customer.name && !el("customerName").value.trim()) {
+      el("customerName").value = customer.name;
+    }
+    if (customer.business && !el("customerBusiness").value.trim()) {
+      el("customerBusiness").value = customer.business;
+    }
+  } catch (error) {
+    console.warn(error);
+  }
+}
+
 async function finishOrder() {
   const name = el("customerName").value.trim();
   const phone = onlyDigits(el("customerPhone").value);
@@ -176,6 +195,11 @@ document.addEventListener("click", (event) => {
 
 el("openCart").addEventListener("click", () => el("cartPanel").classList.add("open"));
 el("closeCart").addEventListener("click", () => el("cartPanel").classList.remove("open"));
+el("customerPhone").addEventListener("input", () => {
+  clearTimeout(customerLookupTimer);
+  customerLookupTimer = setTimeout(lookupCustomerByPhone, 450);
+});
+el("customerPhone").addEventListener("blur", lookupCustomerByPhone);
 el("finishOrder").addEventListener("click", finishOrder);
 el("continueShopping").addEventListener("click", () => {
   cart = [];

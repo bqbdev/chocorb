@@ -37,11 +37,12 @@ service cloud.firestore {
     }
 
     match /customers/{customerId} {
+      allow get: if true;
       allow create, update: if request.resource.data.keys().hasOnly([
         'name', 'phone', 'business', 'totalOrders', 'totalPurchased',
         'lastOrder', 'createdAt'
       ]);
-      allow read, delete: if signedIn();
+      allow list, delete: if signedIn();
     }
 
     match /payments/{paymentId} {
