@@ -89,6 +89,16 @@ input, select, textarea {
 }
 .side-brand { display: flex; align-items: center; gap: 10px; }
 .side-brand img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+.store-link {
+  display: block;
+  padding: 10px 11px;
+  border-radius: 8px;
+  color: var(--choco);
+  background: #f9ead7;
+  text-decoration: none;
+  font-weight: 900;
+  text-align: center;
+}
 .sidebar nav { display: grid; gap: 6px; }
 .sidebar nav button, .logout {
   text-align: left;
@@ -140,6 +150,24 @@ input, select, textarea {
 .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .secondary { background: #f3e3cf; color: var(--choco); padding: 8px 10px; }
 .danger { background: #fee4e2; color: var(--red); padding: 8px 10px; }
+.success { background: #dcfae6; color: var(--green); padding: 8px 10px; }
+.product-cell { display: flex; align-items: center; gap: 10px; min-width: 220px; }
+.product-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #f3e3cf;
+  border: 1px solid var(--line);
+  flex: 0 0 auto;
+}
+.thumb-fallback {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: .72rem;
+  text-align: center;
+}
 .form-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -159,6 +187,12 @@ input, select, textarea {
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 18px;
+}
+.filter-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto auto;
+  gap: 10px;
+  margin-bottom: 14px;
 }
 .result {
   grid-column: 1 / -1;
@@ -183,6 +217,26 @@ input, select, textarea {
 .pill.low { background: #fee4e2; color: var(--red); }
 .pill.ok { background: #dcfae6; color: var(--green); }
 canvas { width: 100%; max-width: 100%; }
+.toast {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 70;
+  max-width: 360px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  color: white;
+  background: var(--choco);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(14px);
+  pointer-events: none;
+  transition: .2s ease;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
 .loading-overlay {
   position: fixed;
   inset: 0;
@@ -239,7 +293,7 @@ body.is-loading #refreshBtn {
   .sidebar nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-main { margin-left: 0; padding: 14px; }
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .grid.two, .form-grid, .calculator, .result { grid-template-columns: 1fr; }
+  .grid.two, .form-grid, .calculator, .result, .filter-grid { grid-template-columns: 1fr; }
   .form-grid textarea, .form-grid button { grid-column: auto; }
   .table { display: block; overflow-x: auto; white-space: nowrap; }
 }

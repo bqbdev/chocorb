@@ -12,6 +12,7 @@
       <img src="logo.png" alt="Choco RB" onerror="this.style.display='none'">
       <strong>Choco RB</strong>
     </div>
+    <a class="store-link" href="index.html" target="_blank" rel="noopener">Ver loja</a>
     <nav id="adminMenu"></nav>
     <button id="logoutBtn" class="logout">Sair</button>
   </aside>
@@ -128,9 +129,35 @@
       </article>
     </section>
 
-    <section id="reportsView" class="view"><article class="panel"><h2>Relatórios</h2><div id="reportsBox"></div></article></section>
-    <section id="settingsView" class="view"><article class="panel"><h2>Configurações</h2><p>Altere o WhatsApp do vendedor na constante <strong>SELLER_WHATSAPP</strong> do arquivo app.js.</p></article></section>
+    <section id="reportsView" class="view">
+      <article class="panel">
+        <h2>Relatórios</h2>
+        <div class="filter-grid">
+          <input id="reportStart" type="date">
+          <input id="reportEnd" type="date">
+          <button id="reportToday" type="button" class="secondary">Hoje</button>
+          <button id="reportMonth" type="button" class="secondary">Este mês</button>
+        </div>
+        <div id="reportsBox"></div>
+      </article>
+    </section>
+
+    <section id="settingsView" class="view">
+      <article class="panel">
+        <h2>Configurações</h2>
+        <form id="settingsForm" class="form-grid">
+          <input id="sellerWhatsapp" placeholder="WhatsApp do vendedor. Ex: 5511999999999">
+          <input id="feeCredit" type="number" step="0.01" placeholder="Taxa cartão crédito %">
+          <input id="feeDebit" type="number" step="0.01" placeholder="Taxa cartão débito %">
+          <input id="feePix" type="number" step="0.01" placeholder="Taxa Pix %">
+          <input id="feeCash" type="number" step="0.01" placeholder="Taxa dinheiro %">
+          <button type="submit">Salvar configurações</button>
+        </form>
+      </article>
+    </section>
   </main>
+
+  <div class="toast" id="orderToast" role="status" aria-live="polite"></div>
 
   <div class="loading-overlay" id="loadingOverlay" aria-live="polite" aria-hidden="true">
     <div class="loading-card">

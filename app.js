@@ -1,4 +1,4 @@
-﻿const SELLER_WHATSAPP = "5519991365263";
+﻿let sellerWhatsapp = "5519991365263";
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 let categories = ["Todos"];
 let products = [];
@@ -10,10 +10,14 @@ const el = (id) => document.getElementById(id);
 
 async function loadProducts() {
   try {
-    const [productsSnap, categoriesSnap] = await Promise.all([
+    const [productsSnap, categoriesSnap, settingsDoc] = await Promise.all([
       db.collection("products").where("active", "==", true).get(),
-      db.collection("categories").where("active", "==", true).get()
+      db.collection("categories").where("active", "==", true).get(),
+      db.collection("settings").doc("business").get()
     ]);
+    if (settingsDoc.exists && settingsDoc.data().sellerWhatsapp) {
+      sellerWhatsapp = settingsDoc.data().sellerWhatsapp;
+    }
     products = productsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     const categoryNames = categoriesSnap.docs
       .map((doc) => doc.data().name)
@@ -142,7 +146,7 @@ async function finishOrder() {
     `\nPagamento: ${paymentMethod}`,
     `Total: ${money.format(total)}`
   ].filter(Boolean);
-  lastWhatsappUrl = `https://wa.me/${SELLER_WHATSAPP}?text=${encodeURIComponent(lines.join("\n"))}`;
+  lastWhatsappUrl = `https://wa.me/${sellerWhatsapp}?text=${encodeURIComponent(lines.join("\n"))}`;
   el("openWhatsappAgain").href = lastWhatsappUrl;
   el("successModal").classList.add("show");
   window.open(lastWhatsappUrl, "_blank", "noopener");
@@ -182,3 +186,4 @@ el("continueShopping").addEventListener("click", () => {
 
 loadProducts();
 renderCart();
+

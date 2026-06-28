@@ -4,8 +4,11 @@ const menu = [
   ["finance", "Financeiro"], ["payments", "Recebimentos"], ["expenses", "Despesas"], ["pricing", "Precificação"], ["reports", "Relatórios"], ["settings", "Configurações"]
 ];
 const statuses = ["Novo", "Confirmado", "Em producao", "Pronto", "Entregue", "Cancelado"];
-let state = { orders: [], products: [], categories: [], customers: [], stock: [], expenses: [], payments: [] };
+const defaultSettings = { sellerWhatsapp: "5519991365263", feeCredit: 0, feeDebit: 0, feePix: 0, feeCash: 0 };
+let state = { orders: [], products: [], categories: [], customers: [], stock: [], expenses: [], payments: [], settings: defaultSettings };
 let currentImageBase64 = "";
+let orderListenerStarted = false;
+let firstOrderSnapshot = true;
 
 const $ = (id) => document.getElementById(id);
 const todayKey = () => new Date().toISOString().slice(0, 10);
@@ -20,6 +23,7 @@ auth.onAuthStateChanged((user) => {
 function initAdmin() {
   renderMenu();
   bindForms();
+  setupOrderNotifications();
   loadAll();
 }
 
@@ -51,6 +55,73 @@ function hideLoading() {
   if ($("refreshBtn")) $("refreshBtn").disabled = false;
 }
 
+function showToast(message) {
+  const toast = $("orderToast");
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 5200);
+}
+
+function playNotificationSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(.001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.18, ctx.currentTime + .02);
+    gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .35);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + .38);
+  } catch (error) {
+    console.warn(error);
+  }
+}
+
+function setupOrderNotifications() {
+  if (orderListenerStarted) return;
+  orderListenerStarted = true;
+  db.collection("orders").orderBy("createdAt", "desc").limit(1).onSnapshot((snap) => {
+    if (firstOrderSnapshot) {
+      firstOrderSnapshot = false;
+      return;
+    }
+    snap.docChanges().forEach((change) => {
+      if (change.type !== "added") return;
+      const order = change.doc.data();
+      showToast(`Novo pedido recebido: ${order.customerName || "Cliente"} - ${moneyAdmin.format(number(order.total))}`);
+      playNotificationSound();
+      loadAll();
+    });
+  });
+}
+
+function normalizePaymentMethod(method) {
+  const text = String(method || "").toLowerCase();
+  if (text.includes("crédito") || text.includes("credito") || text === "cartão" || text === "cartao") return "credit";
+  if (text.includes("débito") || text.includes("debito")) return "debit";
+  if (text.includes("pix")) return "pix";
+  if (text.includes("dinheiro")) return "cash";
+  return "cash";
+}
+
+function feeRateFor(method) {
+  const settings = state.settings || defaultSettings;
+  const key = normalizePaymentMethod(method);
+  if (key === "credit") return number(settings.feeCredit);
+  if (key === "debit") return number(settings.feeDebit);
+  if (key === "pix") return number(settings.feePix);
+  return number(settings.feeCash);
+}
+
+function paymentFee(value, method) {
+  return number(value) * (feeRateFor(method) / 100);
+}
+
 async function loadCollection(name, orderBy = "createdAt", direction = "desc") {
   try {
     const snap = await db.collection(name).orderBy(orderBy, direction).get();
@@ -61,13 +132,18 @@ async function loadCollection(name, orderBy = "createdAt", direction = "desc") {
   }
 }
 
+async function loadSettingsDoc() {
+  const doc = await db.collection("settings").doc("business").get();
+  return doc.exists ? { ...defaultSettings, ...doc.data() } : defaultSettings;
+}
+
 async function loadAll() {
   showLoading();
   try {
-    const [orders, products, categories, customers, stock, expenses, payments] = await Promise.all([
-      loadCollection("orders"), loadCollection("products"), loadCollection("categories", "order", "asc"), loadCollection("customers", "lastOrder"), loadCollection("stock"), loadCollection("expenses"), loadCollection("payments")
+    const [orders, products, categories, customers, stock, expenses, payments, settings] = await Promise.all([
+      loadCollection("orders"), loadCollection("products"), loadCollection("categories", "order", "asc"), loadCollection("customers", "lastOrder"), loadCollection("stock"), loadCollection("expenses"), loadCollection("payments"), loadSettingsDoc()
     ]);
-    state = { orders, products, categories, customers, stock, expenses, payments };
+    state = { orders, products, categories, customers, stock, expenses, payments, settings };
     renderEverything();
   } finally {
     hideLoading();
@@ -85,6 +161,7 @@ function renderEverything() {
   renderExpenses();
   renderPayments();
   renderFinance();
+  renderSettings();
   renderReports();
   updatePricing();
   updateResale();
@@ -105,6 +182,19 @@ function isThisMonth(value) {
   const date = dateFromFirestore(value);
   const now = new Date();
   return date && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+}
+
+function dateKey(value) {
+  const date = dateFromFirestore(value);
+  return date ? date.toISOString().slice(0, 10) : "";
+}
+
+function withinRange(value, start, end) {
+  const key = dateKey(value);
+  if (!key) return false;
+  if (start && key < start) return false;
+  if (end && key > end) return false;
+  return true;
 }
 
 function renderDashboard() {
@@ -186,14 +276,25 @@ function renderOrders() {
 }
 
 function renderProducts() {
-  $("productsList").innerHTML = state.products.length ? `<table class="table"><thead><tr><th>Produto</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Status</th><th>Ações</th></tr></thead><tbody>${state.products.map((p) => `
+  $("productsList").innerHTML = state.products.length ? `<table class="table"><thead><tr><th>Produto</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Status</th><th>Destaque</th><th>Ações</th></tr></thead><tbody>${state.products.map((p) => `
     <tr>
-      <td><strong>${p.name}</strong><br>${p.description || ""}</td>
+      <td>
+        <div class="product-cell">
+          ${p.imageBase64 ? `<img class="product-thumb" src="${p.imageBase64}" alt="${p.name}">` : `<div class="product-thumb thumb-fallback">Sem imagem</div>`}
+          <div><strong>${p.name}</strong><br>${p.description || ""}</div>
+        </div>
+      </td>
       <td>${p.category || "-"}</td>
       <td>${moneyAdmin.format(number(p.price))}</td>
       <td>${number(p.stock)}</td>
       <td><span class="pill ${p.active ? "ok" : "low"}">${p.active ? "Ativo" : "Inativo"}</span></td>
-      <td><div class="row-actions"><button class="secondary" data-edit-product="${p.id}">Editar</button><button class="danger" data-delete-product="${p.id}">Excluir</button></div></td>
+      <td><span class="pill ${p.featured ? "ok" : ""}">${p.featured ? "Sim" : "Não"}</span></td>
+      <td><div class="row-actions">
+        <button class="secondary" data-edit-product="${p.id}">Editar</button>
+        <button class="${p.active ? "danger" : "success"}" data-toggle-product="${p.id}">${p.active ? "Desativar" : "Ativar"}</button>
+        <button class="secondary" data-toggle-featured="${p.id}">${p.featured ? "Remover destaque" : "Destacar"}</button>
+        <button class="danger" data-delete-product="${p.id}">Excluir</button>
+      </div></td>
     </tr>`).join("")}</tbody></table>` : "Nenhum produto cadastrado.";
 }
 
@@ -325,8 +426,22 @@ async function saveStock(event) {
 }
 
 function renderPayments() {
-  $("paymentsList").innerHTML = state.payments.length ? `<table class="table"><thead><tr><th>Pedido</th><th>Cliente</th><th>Valor</th><th>Forma</th><th>Status</th><th>Data</th></tr></thead><tbody>${state.payments.map((p) => `
-    <tr><td>${p.orderId || "-"}</td><td>${p.customerName || "-"}</td><td>${moneyAdmin.format(number(p.value))}</td><td>${p.method || "-"}</td><td><span class="pill">${p.status || "Pendente"}</span></td><td>${dateFromFirestore(p.createdAt)?.toLocaleDateString("pt-BR") || "-"}</td></tr>`).join("")}</tbody></table>` : "Nenhum recebimento registrado.";
+  $("paymentsList").innerHTML = state.payments.length ? `<table class="table"><thead><tr><th>Pedido</th><th>Cliente</th><th>Valor</th><th>Forma</th><th>Taxa</th><th>Líquido</th><th>Status</th><th>Data baixa</th><th>Ações</th></tr></thead><tbody>${state.payments.map((p) => {
+    const fee = p.feeValue != null ? number(p.feeValue) : paymentFee(p.value, p.method);
+    const net = p.netValue != null ? number(p.netValue) : number(p.value) - fee;
+    return `
+    <tr>
+      <td>${p.orderId || "-"}</td>
+      <td>${p.customerName || "-"}</td>
+      <td>${moneyAdmin.format(number(p.value))}</td>
+      <td>${p.method || "-"}</td>
+      <td>${moneyAdmin.format(fee)} (${(p.feeRate != null ? number(p.feeRate) : feeRateFor(p.method)).toFixed(2)}%)</td>
+      <td>${moneyAdmin.format(net)}</td>
+      <td><span class="pill ${p.status === "Pago" ? "ok" : ""}">${p.status || "Pendente"}</span></td>
+      <td>${dateFromFirestore(p.paidAt)?.toLocaleDateString("pt-BR") || "-"}</td>
+      <td>${p.status === "Pago" ? "-" : `<button class="success" data-pay-payment="${p.id}">Dar baixa</button>`}</td>
+    </tr>`;
+  }).join("")}</tbody></table>` : "Nenhum recebimento registrado.";
 }
 
 function renderExpenses() {
@@ -347,23 +462,73 @@ async function saveExpense(event) {
 function renderFinance() {
   const gross = state.orders.filter((o) => o.status !== "Cancelado").reduce((s, o) => s + number(o.total), 0);
   const paid = state.payments.filter((p) => p.status === "Pago").reduce((s, p) => s + number(p.value), 0);
+  const paymentFees = state.payments.filter((p) => p.status === "Pago").reduce((s, p) => s + number(p.feeValue), 0);
   const expenses = state.expenses.reduce((s, e) => s + number(e.value), 0);
-  const net = gross - expenses;
+  const net = gross - expenses - paymentFees;
   const margin = gross ? (net / gross) * 100 : 0;
   $("financeBox").innerHTML = `<div class="kpis">
     <div class="kpi"><span>Faturamento bruto</span><strong>${moneyAdmin.format(gross)}</strong></div>
     <div class="kpi"><span>Recebimentos pagos</span><strong>${moneyAdmin.format(paid)}</strong></div>
     <div class="kpi"><span>Despesas totais</span><strong>${moneyAdmin.format(expenses)}</strong></div>
+    <div class="kpi"><span>Taxas de pagamento</span><strong>${moneyAdmin.format(paymentFees)}</strong></div>
     <div class="kpi"><span>Lucro liquido</span><strong>${moneyAdmin.format(net)}</strong></div>
     <div class="kpi"><span>Margem de lucro</span><strong>${margin.toFixed(1)}%</strong></div>
   </div>`;
 }
 
 function renderReports() {
-  const orders = state.orders.length;
-  const customers = state.customers.length;
+  const start = $("reportStart")?.value || "";
+  const end = $("reportEnd")?.value || "";
+  const orders = state.orders.filter((order) => withinRange(order.createdAt, start, end));
+  const payments = state.payments.filter((payment) => withinRange(payment.paidAt || payment.createdAt, start, end));
+  const expenses = state.expenses.filter((expense) => {
+    const key = expense.date || dateKey(expense.createdAt);
+    if (!key) return false;
+    if (start && key < start) return false;
+    if (end && key > end) return false;
+    return true;
+  });
+  const gross = orders.filter((o) => o.status !== "Cancelado").reduce((s, o) => s + number(o.total), 0);
+  const paid = payments.filter((p) => p.status === "Pago").reduce((s, p) => s + number(p.value), 0);
+  const fees = payments.filter((p) => p.status === "Pago").reduce((s, p) => s + number(p.feeValue), 0);
+  const expenseTotal = expenses.reduce((s, e) => s + number(e.value), 0);
+  const net = gross - expenseTotal - fees;
   const stockLow = state.stock.filter((s) => number(s.current) <= number(s.min)).length;
-  $("reportsBox").innerHTML = `<div class="kpis"><div class="kpi"><span>Total de pedidos</span><strong>${orders}</strong></div><div class="kpi"><span>Clientes</span><strong>${customers}</strong></div><div class="kpi"><span>Alertas de estoque</span><strong>${stockLow}</strong></div></div>`;
+  $("reportsBox").innerHTML = `<div class="kpis">
+    <div class="kpi"><span>Pedidos no período</span><strong>${orders.length}</strong></div>
+    <div class="kpi"><span>Faturamento bruto</span><strong>${moneyAdmin.format(gross)}</strong></div>
+    <div class="kpi"><span>Recebido pago</span><strong>${moneyAdmin.format(paid)}</strong></div>
+    <div class="kpi"><span>Taxas</span><strong>${moneyAdmin.format(fees)}</strong></div>
+    <div class="kpi"><span>Despesas</span><strong>${moneyAdmin.format(expenseTotal)}</strong></div>
+    <div class="kpi"><span>Lucro líquido est.</span><strong>${moneyAdmin.format(net)}</strong></div>
+    <div class="kpi"><span>Alertas de estoque</span><strong>${stockLow}</strong></div>
+  </div>`;
+}
+
+function renderSettings() {
+  const settings = state.settings || defaultSettings;
+  $("sellerWhatsapp").value = settings.sellerWhatsapp || "";
+  $("feeCredit").value = number(settings.feeCredit);
+  $("feeDebit").value = number(settings.feeDebit);
+  $("feePix").value = number(settings.feePix);
+  $("feeCash").value = number(settings.feeCash);
+}
+
+async function saveSettings(event) {
+  event.preventDefault();
+  const payload = {
+    sellerWhatsapp: String($("sellerWhatsapp").value || "").replace(/\D/g, ""),
+    feeCredit: number($("feeCredit").value),
+    feeDebit: number($("feeDebit").value),
+    feePix: number($("feePix").value),
+    feeCash: number($("feeCash").value),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  await db.collection("settings").doc("business").set(payload, { merge: true });
+  state.settings = { ...state.settings, ...payload };
+  showToast("Configurações salvas.");
+  renderFinance();
+  renderReports();
 }
 
 function updatePricing() {
@@ -388,8 +553,22 @@ function bindForms() {
   $("refreshBtn").addEventListener("click", loadAll);
   $("productForm").addEventListener("submit", saveProduct);
   $("categoryForm").addEventListener("submit", saveCategory);
+  $("settingsForm").addEventListener("submit", saveSettings);
   $("stockForm").addEventListener("submit", saveStock);
   $("expenseForm").addEventListener("submit", saveExpense);
+  $("reportStart").addEventListener("change", renderReports);
+  $("reportEnd").addEventListener("change", renderReports);
+  $("reportToday").addEventListener("click", () => {
+    $("reportStart").value = todayKey();
+    $("reportEnd").value = todayKey();
+    renderReports();
+  });
+  $("reportMonth").addEventListener("click", () => {
+    const now = new Date();
+    $("reportStart").value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+    $("reportEnd").value = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+    renderReports();
+  });
   document.addEventListener("change", async (event) => {
     if (event.target.dataset.orderStatus) {
       await db.collection("orders").doc(event.target.dataset.orderStatus).update({ status: event.target.value, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
@@ -405,6 +584,31 @@ function bindForms() {
   document.addEventListener("click", async (event) => {
     if (event.target.dataset.editProduct) editProduct(event.target.dataset.editProduct);
     if (event.target.dataset.editCategory) editCategory(event.target.dataset.editCategory);
+    if (event.target.dataset.toggleProduct) {
+      const product = state.products.find((item) => item.id === event.target.dataset.toggleProduct);
+      await db.collection("products").doc(product.id).update({ active: !product.active, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+      await loadAll();
+    }
+    if (event.target.dataset.toggleFeatured) {
+      const product = state.products.find((item) => item.id === event.target.dataset.toggleFeatured);
+      await db.collection("products").doc(product.id).update({ featured: !product.featured, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+      await loadAll();
+    }
+    if (event.target.dataset.payPayment) {
+      const payment = state.payments.find((item) => item.id === event.target.dataset.payPayment);
+      const feeRate = feeRateFor(payment.method);
+      const feeValue = paymentFee(payment.value, payment.method);
+      await db.collection("payments").doc(payment.id).update({
+        status: "Pago",
+        paidAt: firebase.firestore.FieldValue.serverTimestamp(),
+        feeRate,
+        feeValue,
+        netValue: number(payment.value) - feeValue,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      showToast("Pagamento baixado com sucesso.");
+      await loadAll();
+    }
     if (event.target.dataset.deleteProduct && confirm("Excluir este produto?")) {
       await db.collection("products").doc(event.target.dataset.deleteProduct).delete();
       await loadAll();

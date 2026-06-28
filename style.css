@@ -59,40 +59,49 @@ button { cursor: pointer; border: 0; }
 .full { width: 100%; }
 main { padding: 18px clamp(14px, 4vw, 48px) 110px; }
 .hero {
-  min-height: 430px;
+  min-height: 470px;
   display: grid;
-  grid-template-columns: 1.05fr .95fr;
+  grid-template-columns: .92fr 1.08fr;
   align-items: center;
   gap: clamp(18px, 4vw, 56px);
   max-width: 1180px;
   margin: 0 auto;
+  perspective: 1200px;
 }
 .eyebrow { color: var(--caramel); font-weight: 900; text-transform: uppercase; font-size: .78rem; }
-h1 { font-size: clamp(2.35rem, 7vw, 5rem); line-height: .95; margin: 8px 0 14px; letter-spacing: 0; }
+h1 { font-size: clamp(3.2rem, 10vw, 7.4rem); line-height: .86; margin: 8px 0 14px; letter-spacing: 0; }
 .hero p { color: var(--muted); max-width: 560px; }
 .hero-art {
-  min-height: 330px;
-  border-radius: 8px;
-  background:
-    radial-gradient(circle at 52% 42%, rgba(255,255,255,.28), transparent 28%),
-    linear-gradient(135deg, #6a3218, #2b140b);
+  min-height: 390px;
   position: relative;
-  overflow: hidden;
-  box-shadow: var(--shadow);
   display: grid;
   place-items: center;
-  padding: 32px;
+  padding: 16px;
+  transform-style: preserve-3d;
+}
+.hero-art::before {
+  content: "";
+  position: absolute;
+  width: min(520px, 82%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201, 128, 60, .24), rgba(91, 45, 23, .08) 46%, transparent 70%);
+  filter: blur(10px);
+  transform: translateZ(-80px);
+  animation: brandGlow 4.8s ease-in-out infinite;
 }
 .hero-art img {
-  width: min(290px, 76%);
+  width: min(440px, 90%);
   aspect-ratio: 1;
   object-fit: contain;
   border-radius: 50%;
-  filter: drop-shadow(0 22px 32px rgba(0, 0, 0, .28));
+  filter: drop-shadow(0 28px 38px rgba(53, 27, 15, .24));
+  transform-origin: center;
+  animation: logoReveal3d 1.15s cubic-bezier(.2, .8, .2, 1) both, logoFloat3d 5.2s ease-in-out 1.15s infinite;
 }
 .hero-logo-fallback {
   display: none;
-  width: min(290px, 76%);
+  width: min(440px, 90%);
   aspect-ratio: 1;
   place-items: center;
   border-radius: 50%;
@@ -100,6 +109,31 @@ h1 { font-size: clamp(2.35rem, 7vw, 5rem); line-height: .95; margin: 8px 0 14px;
   text-align: center;
   font-size: clamp(2rem, 8vw, 4rem);
   background: radial-gradient(circle at 30% 25%, #d69a5b, var(--choco));
+  box-shadow: var(--shadow);
+  animation: logoReveal3d 1.15s cubic-bezier(.2, .8, .2, 1) both, logoFloat3d 5.2s ease-in-out 1.15s infinite;
+}
+@keyframes logoReveal3d {
+  0% {
+    opacity: 0;
+    transform: translateY(34px) rotateX(42deg) rotateY(-22deg) scale(.72);
+    filter: drop-shadow(0 4px 8px rgba(53, 27, 15, .04));
+  }
+  68% {
+    opacity: 1;
+    transform: translateY(-6px) rotateX(-5deg) rotateY(6deg) scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0) rotateY(0) scale(1);
+  }
+}
+@keyframes logoFloat3d {
+  0%, 100% { transform: translateY(0) rotateX(0) rotateY(0) scale(1); }
+  50% { transform: translateY(-12px) rotateX(4deg) rotateY(-5deg) scale(1.025); }
+}
+@keyframes brandGlow {
+  0%, 100% { opacity: .72; transform: translateZ(-80px) scale(.94); }
+  50% { opacity: 1; transform: translateZ(-80px) scale(1.06); }
 }
 .categories {
   max-width: 1180px;
@@ -283,7 +317,7 @@ input, textarea, select {
 }
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 22px; }
-  .hero-art { min-height: 240px; }
+  .hero-art { min-height: 300px; order: -1; }
   .products { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 540px) {
