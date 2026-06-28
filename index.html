@@ -1,9 +1,9 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Choco RB | Cardapio Digital</title>
+  <title>Choco RB | Cardápio Digital</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,13 +22,14 @@
   <main>
     <section class="hero">
       <div>
-        <p class="eyebrow">Cardapio online</p>
+        <p class="eyebrow">Cardápio online</p>
         <h1>Doces artesanais feitos para encantar.</h1>
         <p>Escolha cones, brigadeiros e kits especiais. Finalize sua encomenda e envie direto para o WhatsApp.</p>
-        <a href="#cardapio" class="primary">Ver cardapio</a>
+        <a href="#cardapio" class="primary">Ver cardápio</a>
       </div>
-      <div class="hero-art" aria-hidden="true">
-        <span></span><span></span><span></span>
+      <div class="hero-art" aria-label="Logo Choco RB em destaque">
+        <img src="logo.png" alt="Choco RB" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
+        <strong class="hero-logo-fallback">Choco RB</strong>
       </div>
     </section>
 
@@ -52,17 +53,17 @@
       <button class="icon-btn" id="closeCart" aria-label="Fechar carrinho">x</button>
     </div>
     <div id="cartItems" class="cart-items"></div>
-    <label>Observacoes
-      <textarea id="orderNotes" rows="3" placeholder="Ex: sem castanhas, entregar apos 16h"></textarea>
+    <label>Observações
+      <textarea id="orderNotes" rows="3" placeholder="Ex: sem castanhas, entregar após 16h"></textarea>
     </label>
     <div class="customer-box">
-      <input id="customerName" placeholder="Nome obrigatorio">
-      <input id="customerPhone" placeholder="WhatsApp obrigatorio">
+      <input id="customerName" placeholder="Nome obrigatório">
+      <input id="customerPhone" placeholder="WhatsApp obrigatório">
       <input id="customerBusiness" placeholder="Estabelecimento opcional">
       <select id="paymentMethod">
         <option>Pix</option>
         <option>Dinheiro</option>
-        <option>Cartao</option>
+        <option>Cartão</option>
         <option>A combinar</option>
       </select>
     </div>
@@ -77,7 +78,7 @@
 
   <div class="modal" id="successModal" aria-hidden="true">
     <div class="modal-card">
-      <div class="check">✓</div>
+      <div class="check">&#10003;</div>
       <h2>Pedido enviado!</h2>
       <p>Seu pedido foi registrado e a mensagem foi preparada para o WhatsApp.</p>
       <a class="primary full" id="openWhatsappAgain" target="_blank" rel="noopener">Abrir WhatsApp</a>
@@ -92,3 +93,5 @@
   <script src="app.js"></script>
 </body>
 </html>
+
+

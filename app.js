@@ -1,4 +1,4 @@
-const SELLER_WHATSAPP = "5511999999999";
+﻿const SELLER_WHATSAPP = "5511999999999";
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const categories = ["Todos", "Cones tradicionais", "Cones gourmet", "Brigadeiros", "Kits especiais"];
 let products = [];
@@ -14,7 +14,7 @@ function svgImage(title, colorA, colorB) {
 const seedProducts = [
   { name: "Cone Brigadeiro", category: "Cones tradicionais", description: "Casquinha crocante com brigadeiro cremoso.", price: 8.5, stock: 40, featured: true, active: true, imageBase64: svgImage("Cone Brigadeiro", "#6b3419", "#d99a58") },
   { name: "Cone Morango", category: "Cones gourmet", description: "Chocolate, creme especial e morangos.", price: 9.5, stock: 30, featured: true, active: true, imageBase64: svgImage("Cone Morango", "#8e2f2f", "#ffd6c2") },
-  { name: "Cone Ninho", category: "Cones gourmet", description: "Recheio de leite ninho e finalizacao branca.", price: 9.5, stock: 30, featured: true, active: true, imageBase64: svgImage("Cone Ninho", "#d7a25a", "#fff3d4") },
+  { name: "Cone Ninho", category: "Cones gourmet", description: "Recheio de leite ninho e finalização branca.", price: 9.5, stock: 30, featured: true, active: true, imageBase64: svgImage("Cone Ninho", "#d7a25a", "#fff3d4") },
   { name: "Brigadeiro Gourmet", category: "Brigadeiros", description: "Unidade enrolada com granulado belga.", price: 3.5, stock: 80, featured: false, active: true, imageBase64: svgImage("Brigadeiro", "#4b2111", "#c78345") },
   { name: "Kit Festa RB", category: "Kits especiais", description: "10 brigadeiros e 4 cones sortidos.", price: 58, stock: 12, featured: true, active: true, imageBase64: svgImage("Kit Festa", "#4a2414", "#f1c27d") }
 ];
@@ -41,7 +41,7 @@ function renderProducts() {
   const list = activeCategory === "Todos" ? products : products.filter((p) => p.category === activeCategory);
   el("productsGrid").innerHTML = list.map((p) => `
     <article class="product-card">
-      ${p.imageBase64 ? `<img class="product-img" src="${p.imageBase64}" alt="${p.name}">` : `<div class="placeholder-img">${p.name}</div>`}
+      ${p.imageBase64 ? `<img class="product-img" src="${p.imageBase64}" alt="${p.name}">` : `<div class="placeholder-img"><strong>Produto sem imagem</strong><span>${p.name}</span></div>`}
       <div class="product-body">
         <h3>${p.name}</h3>
         <p>${p.description || ""}</p>
@@ -84,7 +84,7 @@ function renderCart() {
         <strong>${item.quantity}</strong>
         <button data-qty="${item.id}" data-diff="1">+</button>
       </div>
-    </div>`).join("") : "<p>Seu carrinho esta vazio.</p>";
+    </div>`).join("") : "<p>Seu carrinho está vazio.</p>";
   const qty = cart.reduce((sum, item) => sum + item.quantity, 0);
   el("cartCount").textContent = `${qty} ${qty === 1 ? "item" : "itens"}`;
   el("cartTotal").textContent = money.format(cartTotal());
@@ -133,7 +133,7 @@ async function finishOrder() {
     "",
     "*Itens:*",
     ...cart.map((item) => `- ${item.quantity}x ${item.name} (${money.format(Number(item.price || 0))})${item.additions.length ? ` | Adicionais: ${item.additions.join(", ")}` : ""}`),
-    notes ? `\nObservacoes: ${notes}` : "",
+    notes ? `\nObservações: ${notes}` : "",
     `\nPagamento: ${paymentMethod}`,
     `Total: ${money.format(total)}`
   ].filter(Boolean);
@@ -177,3 +177,4 @@ el("continueShopping").addEventListener("click", () => {
 
 loadProducts();
 renderCart();
+

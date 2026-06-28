@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --choco: #351b0f;
   --choco-2: #5b2d17;
   --caramel: #c9803c;
@@ -74,25 +74,33 @@ h1 { font-size: clamp(2.35rem, 7vw, 5rem); line-height: .95; margin: 8px 0 14px;
   min-height: 330px;
   border-radius: 8px;
   background:
-    radial-gradient(circle at 55% 30%, rgba(255,255,255,.72), transparent 22%),
-    radial-gradient(circle at 20% 80%, #f7d8aa 0 12%, transparent 13%),
+    radial-gradient(circle at 52% 42%, rgba(255,255,255,.28), transparent 28%),
     linear-gradient(135deg, #6a3218, #2b140b);
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow);
+  display: grid;
+  place-items: center;
+  padding: 32px;
 }
-.hero-art span {
-  position: absolute;
-  width: 120px;
-  height: 190px;
-  clip-path: polygon(18% 0, 82% 0, 62% 100%, 38% 100%);
-  background: linear-gradient(#f6ddbd 0 38%, #7a3e20 39% 100%);
-  border-radius: 34px 34px 18px 18px;
-  transform: rotate(-14deg);
+.hero-art img {
+  width: min(290px, 76%);
+  aspect-ratio: 1;
+  object-fit: contain;
+  border-radius: 50%;
+  filter: drop-shadow(0 22px 32px rgba(0, 0, 0, .28));
 }
-.hero-art span:nth-child(1) { left: 12%; top: 23%; }
-.hero-art span:nth-child(2) { left: 43%; top: 14%; transform: rotate(8deg); }
-.hero-art span:nth-child(3) { right: 10%; bottom: 10%; transform: rotate(18deg); }
+.hero-logo-fallback {
+  display: none;
+  width: min(290px, 76%);
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 50%;
+  color: white;
+  text-align: center;
+  font-size: clamp(2rem, 8vw, 4rem);
+  background: radial-gradient(circle at 30% 25%, #d69a5b, var(--choco));
+}
 .categories {
   max-width: 1180px;
   margin: 10px auto 24px;
@@ -144,6 +152,8 @@ h1 { font-size: clamp(2.35rem, 7vw, 5rem); line-height: .95; margin: 8px 0 14px;
   text-align: center;
   background: radial-gradient(circle at 30% 25%, #d9a15f, var(--choco));
 }
+.placeholder-img strong { font-size: 1.05rem; }
+.placeholder-img span { color: var(--muted); font-size: .88rem; font-weight: 700; }
 .product-body { padding: 12px; display: grid; gap: 8px; flex: 1; }
 .product-body h3 { margin: 0; font-size: 1rem; }
 .product-body p { margin: 0; color: var(--muted); font-size: .9rem; }
@@ -253,3 +263,4 @@ input, textarea, select {
   .section-title { display: block; }
   .floating-cart { left: 12px; right: 12px; justify-content: space-between; }
 }
+

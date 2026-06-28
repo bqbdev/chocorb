@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
@@ -48,9 +48,9 @@
           <select id="productCategory">
             <option>Cones tradicionais</option><option>Cones gourmet</option><option>Brigadeiros</option><option>Kits especiais</option>
           </select>
-          <input id="productPrice" type="number" step="0.01" placeholder="Preco">
+          <input id="productPrice" type="number" step="0.01" placeholder="Preço">
           <input id="productStock" type="number" placeholder="Estoque atual">
-          <textarea id="productDescription" placeholder="Descricao"></textarea>
+          <textarea id="productDescription" placeholder="Descrição"></textarea>
           <input id="productImage" type="file" accept="image/*">
           <label class="checkline"><input id="productActive" type="checkbox" checked> Ativo</label>
           <label class="checkline"><input id="productFeatured" type="checkbox"> Destaque</label>
@@ -68,7 +68,7 @@
         <form id="stockForm" class="form-grid">
           <input id="stockName" placeholder="Produto ou ingrediente">
           <input id="stockCurrent" type="number" placeholder="Estoque atual">
-          <input id="stockMin" type="number" placeholder="Estoque minimo">
+          <input id="stockMin" type="number" placeholder="Estoque mínimo">
           <select id="stockType"><option>Produto pronto</option><option>Ingrediente</option></select>
           <button type="submit">Registrar estoque</button>
         </form>
@@ -83,12 +83,12 @@
       <article class="panel">
         <h2>Despesas extras</h2>
         <form id="expenseForm" class="form-grid">
-          <input id="expenseDescription" placeholder="Descricao da despesa">
-          <select id="expenseCategory"><option>Ingredientes</option><option>Embalagens</option><option>Aluguel</option><option>Energia</option><option>Agua</option><option>Internet</option><option>Transporte/entrega</option><option>Marketing</option><option>Manutencao</option><option>Taxas</option><option>Outras</option></select>
+          <input id="expenseDescription" placeholder="Descrição da despesa">
+          <select id="expenseCategory"><option>Ingredientes</option><option>Embalagens</option><option>Aluguel</option><option>Energia</option><option>Água</option><option>Internet</option><option>Transporte/entrega</option><option>Marketing</option><option>Manutenção</option><option>Taxas</option><option>Outras</option></select>
           <input id="expenseValue" type="number" step="0.01" placeholder="Valor">
           <input id="expenseDate" type="date">
           <input id="expenseMethod" placeholder="Forma de pagamento">
-          <textarea id="expenseNote" placeholder="Observacao"></textarea>
+          <textarea id="expenseNote" placeholder="Observação"></textarea>
           <button type="submit">Salvar despesa</button>
         </form>
         <div id="expensesList"></div>
@@ -97,11 +97,11 @@
 
     <section id="pricingView" class="view">
       <article class="panel">
-        <h2>Precificacao</h2>
+        <h2>Precificação</h2>
         <div class="calculator">
           <input id="costIngredients" type="number" step="0.01" placeholder="Custo dos ingredientes">
           <input id="costPackage" type="number" step="0.01" placeholder="Embalagem">
-          <input id="costLabor" type="number" step="0.01" placeholder="Mao de obra">
+          <input id="costLabor" type="number" step="0.01" placeholder="Mão de obra">
           <input id="costOther" type="number" step="0.01" placeholder="Outros custos">
           <input id="desiredMargin" type="number" value="60" placeholder="Margem desejada %">
           <div id="pricingResult" class="result"></div>
@@ -116,8 +116,8 @@
       </article>
     </section>
 
-    <section id="reportsView" class="view"><article class="panel"><h2>Relatorios</h2><div id="reportsBox"></div></article></section>
-    <section id="settingsView" class="view"><article class="panel"><h2>Configuracoes</h2><p>Altere o WhatsApp do vendedor na constante <strong>SELLER_WHATSAPP</strong> do arquivo app.js.</p></article></section>
+    <section id="reportsView" class="view"><article class="panel"><h2>Relatórios</h2><div id="reportsBox"></div></article></section>
+    <section id="settingsView" class="view"><article class="panel"><h2>Configurações</h2><p>Altere o WhatsApp do vendedor na constante <strong>SELLER_WHATSAPP</strong> do arquivo app.js.</p></article></section>
   </main>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
@@ -127,3 +127,4 @@
   <script src="admin.js"></script>
 </body>
 </html>
+

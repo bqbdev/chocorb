@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
@@ -30,9 +30,10 @@
         await auth.signInWithEmailAndPassword(email, password);
         location.href = "dashboard.html";
       } catch (error) {
-        msg.textContent = "Nao foi possivel entrar. Confira e-mail e senha.";
+        msg.textContent = "Não foi possível entrar. Confira e-mail e senha.";
       }
     });
   </script>
 </body>
 </html>
+

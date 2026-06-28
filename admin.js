@@ -1,7 +1,7 @@
-const moneyAdmin = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+﻿const moneyAdmin = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const menu = [
   ["dashboard", "Dashboard"], ["orders", "Pedidos"], ["products", "Produtos"], ["customers", "Clientes"], ["stock", "Estoque"],
-  ["finance", "Financeiro"], ["payments", "Recebimentos"], ["expenses", "Despesas"], ["pricing", "Precificacao"], ["reports", "Relatorios"], ["settings", "Configuracoes"]
+  ["finance", "Financeiro"], ["payments", "Recebimentos"], ["expenses", "Despesas"], ["pricing", "Precificação"], ["reports", "Relatórios"], ["settings", "Configurações"]
 ];
 const statuses = ["Novo", "Confirmado", "Em producao", "Pronto", "Entregue", "Cancelado"];
 let state = { orders: [], products: [], customers: [], stock: [], expenses: [], payments: [] };
@@ -161,7 +161,7 @@ function renderOrders() {
 }
 
 function renderProducts() {
-  $("productsList").innerHTML = state.products.length ? `<table class="table"><thead><tr><th>Produto</th><th>Categoria</th><th>Preco</th><th>Estoque</th><th>Status</th><th>Acoes</th></tr></thead><tbody>${state.products.map((p) => `
+  $("productsList").innerHTML = state.products.length ? `<table class="table"><thead><tr><th>Produto</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Status</th><th>Ações</th></tr></thead><tbody>${state.products.map((p) => `
     <tr>
       <td><strong>${p.name}</strong><br>${p.description || ""}</td>
       <td>${p.category || "-"}</td>
@@ -257,7 +257,7 @@ function renderPayments() {
 }
 
 function renderExpenses() {
-  $("expensesList").innerHTML = state.expenses.length ? `<table class="table"><thead><tr><th>Descricao</th><th>Categoria</th><th>Valor</th><th>Data</th><th>Forma</th><th>Observacao</th></tr></thead><tbody>${state.expenses.map((e) => `
+  $("expensesList").innerHTML = state.expenses.length ? `<table class="table"><thead><tr><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Data</th><th>Forma</th><th>Observação</th></tr></thead><tbody>${state.expenses.map((e) => `
     <tr><td>${e.description}</td><td>${e.category}</td><td>${moneyAdmin.format(number(e.value))}</td><td>${e.date || "-"}</td><td>${e.method || "-"}</td><td>${e.note || "-"}</td></tr>`).join("")}</tbody></table>` : "Nenhuma despesa registrada.";
 }
 
@@ -298,7 +298,7 @@ function updatePricing() {
   const margin = number($("desiredMargin").value);
   const price = total / (1 - margin / 100 || 1);
   const profit = price - total;
-  $("pricingResult").innerHTML = `<div><span>Custo total</span><strong>${moneyAdmin.format(total)}</strong></div><div><span>Preco sugerido</span><strong>${moneyAdmin.format(price)}</strong></div><div><span>Lucro estimado</span><strong>${moneyAdmin.format(profit)}</strong></div><div><span>Margem aplicada</span><strong>${margin.toFixed(1)}%</strong></div>`;
+  $("pricingResult").innerHTML = `<div><span>Custo total</span><strong>${moneyAdmin.format(total)}</strong></div><div><span>Preço sugerido</span><strong>${moneyAdmin.format(price)}</strong></div><div><span>Lucro estimado</span><strong>${moneyAdmin.format(profit)}</strong></div><div><span>Margem aplicada</span><strong>${margin.toFixed(1)}%</strong></div>`;
 }
 
 function updateResale() {
@@ -306,7 +306,7 @@ function updateResale() {
   const direct = cost / (1 - number($("directMargin").value) / 100 || 1);
   const resale = cost * 1.35;
   const partnerSale = resale / (1 - number($("partnerMargin").value) / 100 || 1);
-  $("resaleResult").innerHTML = `<div><span>Preco venda direta</span><strong>${moneyAdmin.format(direct)}</strong></div><div><span>Lucro direto</span><strong>${moneyAdmin.format(direct - cost)}</strong></div><div><span>Preco revenda</span><strong>${moneyAdmin.format(resale)}</strong></div><div><span>Lucro revendedor</span><strong>${moneyAdmin.format(partnerSale - resale)}</strong></div>`;
+  $("resaleResult").innerHTML = `<div><span>Preço venda direta</span><strong>${moneyAdmin.format(direct)}</strong></div><div><span>Lucro direto</span><strong>${moneyAdmin.format(direct - cost)}</strong></div><div><span>Preço revenda</span><strong>${moneyAdmin.format(resale)}</strong></div><div><span>Lucro revendedor</span><strong>${moneyAdmin.format(partnerSale - resale)}</strong></div>`;
 }
 
 function bindForms() {
@@ -336,3 +336,4 @@ function bindForms() {
     }
   });
 }
+
