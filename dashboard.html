@@ -73,7 +73,20 @@
       </article>
     </section>
 
-    <section id="customersView" class="view"><article class="panel"><h2>Clientes</h2><div id="customersList"></div></article></section>
+    <section id="customersView" class="view">
+      <article class="panel">
+        <h2>Clientes</h2>
+        <div class="filter-grid customer-filter-grid">
+          <input id="customerFilter" placeholder="Filtrar por nome, WhatsApp ou empresa">
+          <input id="customerStart" type="date">
+          <input id="customerEnd" type="date">
+          <button id="customerToday" type="button" class="secondary">Hoje</button>
+          <button id="customerMonth" type="button" class="secondary">Este mês</button>
+        </div>
+        <div id="customerRevenueSummary"></div>
+        <div id="customersList"></div>
+      </article>
+    </section>
 
     <section id="stockView" class="view">
       <article class="panel">

@@ -4,6 +4,7 @@ const menu = [
   ["finance", "Financeiro"], ["payments", "Recebimentos"], ["expenses", "Despesas"], ["pricing", "Precificação"], ["reports", "Relatórios"], ["settings", "Configurações"]
 ];
 const statuses = ["Novo", "Confirmado", "Em producao", "Pronto", "Entregue", "Cancelado"];
+const paymentStatuses = ["Pendente", "Pago", "Erro no pagamento", "Cancelado"];
 const defaultSettings = { sellerWhatsapp: "5519991365263", feeCredit: 0, feeDebit: 0, feePix: 0, feeCash: 0 };
 let state = { orders: [], products: [], categories: [], customers: [], stock: [], expenses: [], payments: [], settings: defaultSettings };
 let currentImageBase64 = "";
@@ -14,6 +15,19 @@ const $ = (id) => document.getElementById(id);
 const todayKey = () => new Date().toISOString().slice(0, 10);
 const number = (value) => Number(value || 0);
 let loadingCount = 0;
+
+function orderStatusText(order) {
+  return String(order?.status || "Novo").trim().toLowerCase();
+}
+
+function countsForRevenue(order) {
+  return orderStatusText(order) !== "cancelado";
+}
+
+function orderTotal(order) {
+  if (order?.total != null) return number(order.total);
+  return (order?.items || []).reduce((sum, item) => sum + number(item.price) * number(item.quantity), 0);
+}
 
 auth.onAuthStateChanged((user) => {
   if (!user) location.href = "login.html";
@@ -93,7 +107,7 @@ function setupOrderNotifications() {
     snap.docChanges().forEach((change) => {
       if (change.type !== "added") return;
       const order = change.doc.data();
-      showToast(`Novo pedido recebido: ${order.customerName || "Cliente"} - ${moneyAdmin.format(number(order.total))}`);
+      showToast(`Novo pedido recebido: ${order.customerName || "Cliente"} - ${moneyAdmin.format(orderTotal(order))}`);
       playNotificationSound();
       loadAll();
     });
@@ -198,13 +212,13 @@ function withinRange(value, start, end) {
 }
 
 function renderDashboard() {
-  const delivered = state.orders.filter((o) => o.status !== "Cancelado");
+  const delivered = state.orders.filter(countsForRevenue);
   const todayOrders = delivered.filter((o) => isToday(o.createdAt));
   const monthOrders = delivered.filter((o) => isThisMonth(o.createdAt));
-  const dayRevenue = todayOrders.reduce((s, o) => s + number(o.total), 0);
-  const monthRevenue = monthOrders.reduce((s, o) => s + number(o.total), 0);
+  const dayRevenue = todayOrders.reduce((s, o) => s + orderTotal(o), 0);
+  const monthRevenue = monthOrders.reduce((s, o) => s + orderTotal(o), 0);
   const expenses = state.expenses.reduce((s, e) => s + number(e.value), 0);
-  const avgTicket = delivered.length ? delivered.reduce((s, o) => s + number(o.total), 0) / delivered.length : 0;
+  const avgTicket = delivered.length ? delivered.reduce((s, o) => s + orderTotal(o), 0) / delivered.length : 0;
   const net = monthRevenue - expenses;
   $("kpis").innerHTML = [
     ["Faturamento hoje", moneyAdmin.format(dayRevenue)], ["Faturamento mes", moneyAdmin.format(monthRevenue)], ["Pedidos hoje", todayOrders.length],
@@ -230,7 +244,7 @@ function drawRevenueChart(orders) {
   const values = days.map((day) => orders.filter((o) => {
     const date = dateFromFirestore(o.createdAt);
     return date && date.toISOString().slice(0, 10) === day;
-  }).reduce((s, o) => s + number(o.total), 0));
+  }).reduce((s, o) => s + orderTotal(o), 0));
   const max = Math.max(...values, 1);
   ctx.strokeStyle = "#c9803c";
   ctx.lineWidth = 4 * devicePixelRatio;
@@ -253,7 +267,7 @@ function drawStatusChart() {
 
 function renderTopProducts() {
   const map = {};
-  state.orders.forEach((order) => (order.items || []).forEach((item) => map[item.name] = (map[item.name] || 0) + number(item.quantity)));
+  state.orders.filter(countsForRevenue).forEach((order) => (order.items || []).forEach((item) => map[item.name] = (map[item.name] || 0) + number(item.quantity)));
   const rows = Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 6);
   $("topProducts").innerHTML = rows.length ? `<table class="table"><tbody>${rows.map(([name, qty]) => `<tr><td>${name}</td><td>${qty} unidades</td></tr>`).join("")}</tbody></table>` : "Sem vendas registradas.";
 }
@@ -264,7 +278,7 @@ function ordersTable(orders, editable = true) {
     <tr>
       <td><strong>${o.customerName || "-"}</strong><br>${o.customerPhone || ""}<br>${o.customerBusiness || ""}</td>
       <td>${(o.items || []).map((i) => `${i.quantity}x ${i.name}`).join("<br>")}</td>
-      <td>${moneyAdmin.format(number(o.total))}</td>
+      <td>${moneyAdmin.format(orderTotal(o))}</td>
       <td>${o.paymentMethod || "-"}</td>
       <td>${editable ? `<select data-order-status="${o.id}">${statuses.map((s) => `<option ${s === o.status ? "selected" : ""}>${s}</option>`).join("")}</select>` : `<span class="pill">${o.status || "Novo"}</span>`}</td>
       <td>${dateFromFirestore(o.createdAt)?.toLocaleDateString("pt-BR") || "-"}</td>
@@ -409,8 +423,55 @@ function editProduct(id) {
 }
 
 function renderCustomers() {
-  $("customersList").innerHTML = state.customers.length ? `<table class="table"><thead><tr><th>Nome</th><th>WhatsApp</th><th>Estabelecimento</th><th>Pedidos</th><th>Total comprado</th><th>Ultimo pedido</th></tr></thead><tbody>${state.customers.map((c) => `
-    <tr><td>${c.name || "-"}</td><td>${c.phone || c.id}</td><td>${c.business || "-"}</td><td>${number(c.totalOrders)}</td><td>${moneyAdmin.format(number(c.totalPurchased))}</td><td>${dateFromFirestore(c.lastOrder)?.toLocaleDateString("pt-BR") || "-"}</td></tr>`).join("")}</tbody></table>` : "Nenhum cliente encontrado.";
+  const term = String($("customerFilter")?.value || "").trim().toLowerCase();
+  const start = $("customerStart")?.value || "";
+  const end = $("customerEnd")?.value || "";
+  const ordersInRange = state.orders.filter((order) => countsForRevenue(order) && withinRange(order.createdAt, start, end));
+  const revenueByPhone = {};
+  const ordersByPhone = {};
+
+  ordersInRange.forEach((order) => {
+    const phone = String(order.customerPhone || "").replace(/\D/g, "");
+    if (!phone) return;
+    revenueByPhone[phone] = (revenueByPhone[phone] || 0) + orderTotal(order);
+    ordersByPhone[phone] = (ordersByPhone[phone] || 0) + 1;
+  });
+
+  const rows = state.customers
+    .map((customer) => {
+      const phone = String(customer.phone || customer.id || "").replace(/\D/g, "");
+      return {
+        ...customer,
+        phone,
+        periodOrders: ordersByPhone[phone] || 0,
+        periodRevenue: revenueByPhone[phone] || 0
+      };
+    })
+    .filter((customer) => {
+      const haystack = `${customer.name || ""} ${customer.phone || ""} ${customer.business || ""}`.toLowerCase();
+      return !term || haystack.includes(term);
+    })
+    .sort((a, b) => b.periodRevenue - a.periodRevenue);
+
+  const periodRevenue = rows.reduce((sum, customer) => sum + customer.periodRevenue, 0);
+  const periodOrders = rows.reduce((sum, customer) => sum + customer.periodOrders, 0);
+  $("customerRevenueSummary").innerHTML = `<div class="kpis">
+    <div class="kpi"><span>Clientes filtrados</span><strong>${rows.length}</strong></div>
+    <div class="kpi"><span>Pedidos no período</span><strong>${periodOrders}</strong></div>
+    <div class="kpi"><span>Faturamento no período</span><strong>${moneyAdmin.format(periodRevenue)}</strong></div>
+  </div>`;
+
+  $("customersList").innerHTML = rows.length ? `<table class="table"><thead><tr><th>Nome</th><th>WhatsApp</th><th>Estabelecimento</th><th>Pedidos total</th><th>Total comprado</th><th>Pedidos período</th><th>Faturamento período</th><th>Último pedido</th></tr></thead><tbody>${rows.map((c) => `
+    <tr>
+      <td>${c.name || "-"}</td>
+      <td>${c.phone || c.id}</td>
+      <td>${c.business || "-"}</td>
+      <td>${number(c.totalOrders)}</td>
+      <td>${moneyAdmin.format(number(c.totalPurchased))}</td>
+      <td>${c.periodOrders}</td>
+      <td>${moneyAdmin.format(c.periodRevenue)}</td>
+      <td>${dateFromFirestore(c.lastOrder)?.toLocaleDateString("pt-BR") || "-"}</td>
+    </tr>`).join("")}</tbody></table>` : "Nenhum cliente encontrado.";
 }
 
 function renderStock() {
@@ -437,11 +498,39 @@ function renderPayments() {
       <td>${p.method || "-"}</td>
       <td>${moneyAdmin.format(fee)} (${(p.feeRate != null ? number(p.feeRate) : feeRateFor(p.method)).toFixed(2)}%)</td>
       <td>${moneyAdmin.format(net)}</td>
-      <td><span class="pill ${p.status === "Pago" ? "ok" : ""}">${p.status || "Pendente"}</span></td>
+      <td><select data-payment-status="${p.id}">${paymentStatuses.map((status) => `<option ${status === (p.status || "Pendente") ? "selected" : ""}>${status}</option>`).join("")}</select></td>
       <td>${dateFromFirestore(p.paidAt)?.toLocaleDateString("pt-BR") || "-"}</td>
-      <td>${p.status === "Pago" ? "-" : `<button class="success" data-pay-payment="${p.id}">Dar baixa</button>`}</td>
+      <td><div class="row-actions">${p.status === "Pago" ? "" : `<button class="success" data-pay-payment="${p.id}">Dar baixa</button>`}<button class="secondary" data-payment-error="${p.id}">Marcar erro</button></div></td>
     </tr>`;
   }).join("")}</tbody></table>` : "Nenhum recebimento registrado.";
+}
+
+async function updatePaymentStatus(paymentId, status) {
+  const payment = state.payments.find((item) => item.id === paymentId);
+  if (!payment) return;
+
+  const update = {
+    status,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  if (status === "Pago") {
+    const feeRate = feeRateFor(payment.method);
+    const feeValue = paymentFee(payment.value, payment.method);
+    update.paidAt = firebase.firestore.FieldValue.serverTimestamp();
+    update.feeRate = feeRate;
+    update.feeValue = feeValue;
+    update.netValue = number(payment.value) - feeValue;
+  } else {
+    update.paidAt = firebase.firestore.FieldValue.delete();
+    update.feeRate = firebase.firestore.FieldValue.delete();
+    update.feeValue = firebase.firestore.FieldValue.delete();
+    update.netValue = firebase.firestore.FieldValue.delete();
+  }
+
+  await db.collection("payments").doc(payment.id).update(update);
+  showToast(status === "Pago" ? "Pagamento baixado com sucesso." : `Pagamento marcado como ${status}.`);
+  await loadAll();
 }
 
 function renderExpenses() {
@@ -460,7 +549,7 @@ async function saveExpense(event) {
 }
 
 function renderFinance() {
-  const gross = state.orders.filter((o) => o.status !== "Cancelado").reduce((s, o) => s + number(o.total), 0);
+  const gross = state.orders.filter(countsForRevenue).reduce((s, o) => s + orderTotal(o), 0);
   const paid = state.payments.filter((p) => p.status === "Pago").reduce((s, p) => s + number(p.value), 0);
   const paymentFees = state.payments.filter((p) => p.status === "Pago").reduce((s, p) => s + number(p.feeValue), 0);
   const expenses = state.expenses.reduce((s, e) => s + number(e.value), 0);
@@ -488,7 +577,7 @@ function renderReports() {
     if (end && key > end) return false;
     return true;
   });
-  const gross = orders.filter((o) => o.status !== "Cancelado").reduce((s, o) => s + number(o.total), 0);
+  const gross = orders.filter(countsForRevenue).reduce((s, o) => s + orderTotal(o), 0);
   const paid = payments.filter((p) => p.status === "Pago").reduce((s, p) => s + number(p.value), 0);
   const fees = payments.filter((p) => p.status === "Pago").reduce((s, p) => s + number(p.feeValue), 0);
   const expenseTotal = expenses.reduce((s, e) => s + number(e.value), 0);
@@ -569,11 +658,26 @@ function bindForms() {
     $("reportEnd").value = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
     renderReports();
   });
+  $("customerFilter").addEventListener("input", renderCustomers);
+  $("customerStart").addEventListener("change", renderCustomers);
+  $("customerEnd").addEventListener("change", renderCustomers);
+  $("customerToday").addEventListener("click", () => {
+    $("customerStart").value = todayKey();
+    $("customerEnd").value = todayKey();
+    renderCustomers();
+  });
+  $("customerMonth").addEventListener("click", () => {
+    const now = new Date();
+    $("customerStart").value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+    $("customerEnd").value = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+    renderCustomers();
+  });
   document.addEventListener("change", async (event) => {
     if (event.target.dataset.orderStatus) {
       await db.collection("orders").doc(event.target.dataset.orderStatus).update({ status: event.target.value, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
       await loadAll();
     }
+    if (event.target.dataset.paymentStatus) await updatePaymentStatus(event.target.dataset.paymentStatus, event.target.value);
     if (["costIngredients", "costPackage", "costLabor", "costOther", "desiredMargin"].includes(event.target.id)) updatePricing();
     if (["resaleCost", "directMargin", "partnerMargin"].includes(event.target.id)) updateResale();
   });
@@ -594,21 +698,8 @@ function bindForms() {
       await db.collection("products").doc(product.id).update({ featured: !product.featured, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
       await loadAll();
     }
-    if (event.target.dataset.payPayment) {
-      const payment = state.payments.find((item) => item.id === event.target.dataset.payPayment);
-      const feeRate = feeRateFor(payment.method);
-      const feeValue = paymentFee(payment.value, payment.method);
-      await db.collection("payments").doc(payment.id).update({
-        status: "Pago",
-        paidAt: firebase.firestore.FieldValue.serverTimestamp(),
-        feeRate,
-        feeValue,
-        netValue: number(payment.value) - feeValue,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      showToast("Pagamento baixado com sucesso.");
-      await loadAll();
-    }
+    if (event.target.dataset.payPayment) await updatePaymentStatus(event.target.dataset.payPayment, "Pago");
+    if (event.target.dataset.paymentError) await updatePaymentStatus(event.target.dataset.paymentError, "Erro no pagamento");
     if (event.target.dataset.deleteProduct && confirm("Excluir este produto?")) {
       await db.collection("products").doc(event.target.dataset.deleteProduct).delete();
       await loadAll();

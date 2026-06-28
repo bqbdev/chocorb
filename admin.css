@@ -194,6 +194,9 @@ input, select, textarea {
   gap: 10px;
   margin-bottom: 14px;
 }
+.customer-filter-grid {
+  grid-template-columns: minmax(220px, 1.4fr) 1fr 1fr auto auto;
+}
 .result {
   grid-column: 1 / -1;
   background: var(--paper);
