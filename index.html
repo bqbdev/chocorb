@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Choco RB | Cardapio Digital</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="logo.png" alt="Choco RB" class="logo" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
+      <span class="logo-fallback">RB</span>
+      <div>
+        <strong>Choco RB</strong>
+        <small>Cones, brigadeiros e kits artesanais</small>
+      </div>
+    </div>
+    <a class="admin-link" href="login.html">Painel</a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Cardapio online</p>
+        <h1>Doces artesanais feitos para encantar.</h1>
+        <p>Escolha cones, brigadeiros e kits especiais. Finalize sua encomenda e envie direto para o WhatsApp.</p>
+        <a href="#cardapio" class="primary">Ver cardapio</a>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+    </section>
+
+    <nav class="categories" id="categoryTabs"></nav>
+
+    <section class="catalog" id="cardapio">
+      <div class="section-title">
+        <h2>Produtos</h2>
+        <p>Adicione os itens e ajuste quantidades no carrinho.</p>
+      </div>
+      <div class="products" id="productsGrid"></div>
+    </section>
+  </main>
+
+  <aside class="cart-panel" id="cartPanel">
+    <div class="cart-head">
+      <div>
+        <strong>Meu pedido</strong>
+        <small id="cartCount">0 itens</small>
+      </div>
+      <button class="icon-btn" id="closeCart" aria-label="Fechar carrinho">x</button>
+    </div>
+    <div id="cartItems" class="cart-items"></div>
+    <label>Observacoes
+      <textarea id="orderNotes" rows="3" placeholder="Ex: sem castanhas, entregar apos 16h"></textarea>
+    </label>
+    <div class="customer-box">
+      <input id="customerName" placeholder="Nome obrigatorio">
+      <input id="customerPhone" placeholder="WhatsApp obrigatorio">
+      <input id="customerBusiness" placeholder="Estabelecimento opcional">
+      <select id="paymentMethod">
+        <option>Pix</option>
+        <option>Dinheiro</option>
+        <option>Cartao</option>
+        <option>A combinar</option>
+      </select>
+    </div>
+    <div class="total-row"><span>Total</span><strong id="cartTotal">R$ 0,00</strong></div>
+    <button class="primary full" id="finishOrder">Finalizar no WhatsApp</button>
+  </aside>
+
+  <button class="floating-cart" id="openCart">
+    <span>Carrinho</span>
+    <strong id="floatingTotal">R$ 0,00</strong>
+  </button>
+
+  <div class="modal" id="successModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="check">✓</div>
+      <h2>Pedido enviado!</h2>
+      <p>Seu pedido foi registrado e a mensagem foi preparada para o WhatsApp.</p>
+      <a class="primary full" id="openWhatsappAgain" target="_blank" rel="noopener">Abrir WhatsApp</a>
+      <button class="ghost full" id="continueShopping">Continuar comprando</button>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function publicOrderCreate() {
+      return request.resource.data.keys().hasOnly([
+        'customerName', 'customerPhone', 'customerBusiness', 'notes',
+        'paymentMethod', 'total', 'status', 'items', 'createdAt'
+      ])
+      && request.resource.data.customerName is string
+      && request.resource.data.customerPhone is string
+      && request.resource.data.total is number
+      && request.resource.data.status == 'Novo';
+    }
+
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if signedIn();
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if signedIn();
+    }
+
+    match /orders/{orderId} {
+      allow create: if publicOrderCreate() || signedIn();
+      allow read, update, delete: if signedIn();
+    }
+
+    match /customers/{customerId} {
+      allow create, update: if request.resource.data.keys().hasOnly([
+        'name', 'phone', 'business', 'totalOrders', 'totalPurchased',
+        'lastOrder', 'createdAt'
+      ]);
+      allow read, delete: if signedIn();
+    }
+
+    match /payments/{paymentId} {
+      allow create: if request.resource.data.keys().hasOnly([
+        'orderId', 'customerName', 'value', 'method', 'status', 'createdAt'
+      ]);
+      allow read, update, delete: if signedIn();
+    }
+
+    match /stock/{stockId} {
+      allow read, write: if signedIn();
+    }
+
+    match /expenses/{expenseId} {
+      allow read, write: if signedIn();
+    }
+  }
+}

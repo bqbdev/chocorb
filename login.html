@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login | Choco RB</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body class="login-page">
+  <main class="login-card">
+    <img src="logo.png" alt="Choco RB" class="login-logo" onerror="this.style.display='none'">
+    <h1>Choco RB</h1>
+    <p>Acesse o painel administrativo.</p>
+    <input id="email" type="email" placeholder="E-mail">
+    <input id="password" type="password" placeholder="Senha">
+    <button id="loginBtn">Entrar</button>
+    <small id="loginMsg"></small>
+  </main>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script>
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const msg = document.getElementById("loginMsg");
+      msg.textContent = "Entrando...";
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        location.href = "dashboard.html";
+      } catch (error) {
+        msg.textContent = "Nao foi possivel entrar. Confira e-mail e senha.";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel | Choco RB</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="side-brand">
+      <img src="logo.png" alt="Choco RB" onerror="this.style.display='none'">
+      <strong>Choco RB</strong>
+    </div>
+    <nav id="adminMenu"></nav>
+    <button id="logoutBtn" class="logout">Sair</button>
+  </aside>
+
+  <main class="admin-main">
+    <header class="admin-top">
+      <div>
+        <p class="eyebrow">Painel administrativo</p>
+        <h1 id="viewTitle">Dashboard</h1>
+      </div>
+      <button id="refreshBtn">Atualizar</button>
+    </header>
+
+    <section id="dashboardView" class="view active">
+      <div class="kpis" id="kpis"></div>
+      <div class="grid two">
+        <article class="panel"><h2>Faturamento</h2><canvas id="revenueChart" height="150"></canvas></article>
+        <article class="panel"><h2>Pedidos por status</h2><div id="statusChart" class="status-chart"></div></article>
+      </div>
+      <div class="grid two">
+        <article class="panel"><h2>Produtos mais vendidos</h2><div id="topProducts"></div></article>
+        <article class="panel"><h2>Pedidos recentes</h2><div id="recentOrders"></div></article>
+      </div>
+    </section>
+
+    <section id="ordersView" class="view"><article class="panel"><h2>Pedidos</h2><div id="ordersList"></div></article></section>
+
+    <section id="productsView" class="view">
+      <article class="panel">
+        <h2>Produtos</h2>
+        <form id="productForm" class="form-grid">
+          <input type="hidden" id="productId">
+          <input id="productName" placeholder="Nome">
+          <select id="productCategory">
+            <option>Cones tradicionais</option><option>Cones gourmet</option><option>Brigadeiros</option><option>Kits especiais</option>
+          </select>
+          <input id="productPrice" type="number" step="0.01" placeholder="Preco">
+          <input id="productStock" type="number" placeholder="Estoque atual">
+          <textarea id="productDescription" placeholder="Descricao"></textarea>
+          <input id="productImage" type="file" accept="image/*">
+          <label class="checkline"><input id="productActive" type="checkbox" checked> Ativo</label>
+          <label class="checkline"><input id="productFeatured" type="checkbox"> Destaque</label>
+          <button type="submit">Salvar produto</button>
+        </form>
+        <div id="productsList"></div>
+      </article>
+    </section>
+
+    <section id="customersView" class="view"><article class="panel"><h2>Clientes</h2><div id="customersList"></div></article></section>
+
+    <section id="stockView" class="view">
+      <article class="panel">
+        <h2>Estoque</h2>
+        <form id="stockForm" class="form-grid">
+          <input id="stockName" placeholder="Produto ou ingrediente">
+          <input id="stockCurrent" type="number" placeholder="Estoque atual">
+          <input id="stockMin" type="number" placeholder="Estoque minimo">
+          <select id="stockType"><option>Produto pronto</option><option>Ingrediente</option></select>
+          <button type="submit">Registrar estoque</button>
+        </form>
+        <div id="stockList"></div>
+      </article>
+    </section>
+
+    <section id="financeView" class="view"><article class="panel"><h2>Financeiro</h2><div id="financeBox"></div></article></section>
+    <section id="paymentsView" class="view"><article class="panel"><h2>Recebimentos</h2><div id="paymentsList"></div></article></section>
+
+    <section id="expensesView" class="view">
+      <article class="panel">
+        <h2>Despesas extras</h2>
+        <form id="expenseForm" class="form-grid">
+          <input id="expenseDescription" placeholder="Descricao da despesa">
+          <select id="expenseCategory"><option>Ingredientes</option><option>Embalagens</option><option>Aluguel</option><option>Energia</option><option>Agua</option><option>Internet</option><option>Transporte/entrega</option><option>Marketing</option><option>Manutencao</option><option>Taxas</option><option>Outras</option></select>
+          <input id="expenseValue" type="number" step="0.01" placeholder="Valor">
+          <input id="expenseDate" type="date">
+          <input id="expenseMethod" placeholder="Forma de pagamento">
+          <textarea id="expenseNote" placeholder="Observacao"></textarea>
+          <button type="submit">Salvar despesa</button>
+        </form>
+        <div id="expensesList"></div>
+      </article>
+    </section>
+
+    <section id="pricingView" class="view">
+      <article class="panel">
+        <h2>Precificacao</h2>
+        <div class="calculator">
+          <input id="costIngredients" type="number" step="0.01" placeholder="Custo dos ingredientes">
+          <input id="costPackage" type="number" step="0.01" placeholder="Embalagem">
+          <input id="costLabor" type="number" step="0.01" placeholder="Mao de obra">
+          <input id="costOther" type="number" step="0.01" placeholder="Outros custos">
+          <input id="desiredMargin" type="number" value="60" placeholder="Margem desejada %">
+          <div id="pricingResult" class="result"></div>
+        </div>
+        <h2>Venda direta e revenda</h2>
+        <div class="calculator">
+          <input id="resaleCost" type="number" step="0.01" placeholder="Custo do produto">
+          <input id="directMargin" type="number" value="60" placeholder="Margem venda direta %">
+          <input id="partnerMargin" type="number" value="35" placeholder="Margem do revendedor %">
+          <div id="resaleResult" class="result"></div>
+        </div>
+      </article>
+    </section>
+
+    <section id="reportsView" class="view"><article class="panel"><h2>Relatorios</h2><div id="reportsBox"></div></article></section>
+    <section id="settingsView" class="view"><article class="panel"><h2>Configuracoes</h2><p>Altere o WhatsApp do vendedor na constante <strong>SELLER_WHATSAPP</strong> do arquivo app.js.</p></article></section>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
